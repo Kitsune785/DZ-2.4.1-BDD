@@ -3,6 +3,7 @@ package ru.netology.date;
 import lombok.Value;
 
 public class DataHelper {
+
     private DataHelper() {
     }
 
@@ -21,50 +22,41 @@ public class DataHelper {
         private String code;
     }
 
-    public static VerificationCode getVerificationCodeFor() {
+    public static VerificationCode getVerificationCodeFor(AuthInfo authInfo) {
         return new VerificationCode("12345");
     }
 
     @Value
-    public static class CardId {
-        private String id;
+    public static class CardInfo {
+        private String cardNumber;
+        private long balance;
     }
 
-    public static CardId getFirstCardId() {
-        return new CardId("92df3f1c-a033-48e6-8390-206f6b1f56c0");
+    public static CardInfo getFirstCardInfo(AuthInfo authInfo) {
+        return new CardInfo("5559 0000 0000 0001", 10_000);
     }
 
-    public static CardId getSecondCardId() {
-        return new CardId("0f3f5c2a-249e-4c3d-8287-09f7a039391d");
+    public static CardInfo getSecondCardInfo(AuthInfo authInfo) {
+        return new CardInfo("5559 0000 0000 0002", 10_000);
     }
 
     @Value
-    public static class TransferInfo {
-        private int amount;
-        private String numberCard;
-    }
+    public static class ReplenishmentInfo {
+        private String refillAmount;
+        private String senderCardNumber;
 
-    public static TransferInfo getFirstCardTransferInfoPositive() {
-        return new TransferInfo(5000, "5559 0000 0000 0002");
-    }
+        public static ReplenishmentInfo getReplenishmentInfo(String senderCardNumber, long refillAmount) {
+            return new ReplenishmentInfo(Long.toString(refillAmount), senderCardNumber);
+        }
 
-    public static TransferInfo getSecondCardTransferInfoPositive() {
-        return new TransferInfo(4000, "5559 0000 0000 0001");
-    }
+        public static ReplenishmentInfo getInvalidReplenishmentInfo(long refillAmount) {
+            return new ReplenishmentInfo(Long.toString(refillAmount), "5559 0000 0000 0003");
+        }
 
-    public static TransferInfo getFirstCardTransferInfoNegative() {
-        return new TransferInfo(-5000, "5559 0000 0000 0002");
-    }
-
-    public static TransferInfo getSecondCardTransferInfoNegative() {
-        return new TransferInfo(20000, "5559 0000 0000 0001");
-    }
-
-    public static TransferInfo setFirstCardTransferInfo(int amountTransfer) {
-        return new TransferInfo(amountTransfer, "5559 0000 0000 0002");
-    }
-
-    public static TransferInfo setSecondCardTransferInfo(int amountTransfer) {
-        return new TransferInfo(amountTransfer, "5559 0000 0000 0001");
+        @Value
+        public static class TransferInfo {
+            private int amount;
+            private String numberCard;
+        }
     }
 }
