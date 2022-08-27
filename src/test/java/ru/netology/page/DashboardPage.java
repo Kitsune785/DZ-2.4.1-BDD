@@ -1,78 +1,72 @@
 package ru.netology.page;
 
+import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import com.github.javafaker.Faker;
+import lombok.val;
+import org.junit.jupiter.api.Assertions;
 import ru.netology.date.DataHelper;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import static com.codeborne.selenide.Condition.attribute;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
+import static java.lang.String.valueOf;
 
 public class DashboardPage {
-    private final SelenideElement heading = $("[data-test-id=dashboard]");
-    private SelenideElement firstBalanceButton = $$("[data-test-id='action-deposit']").first();
-    private SelenideElement secondBalanceButton = $$("[data-test-id='action-deposit']").last();
-    private SelenideElement reloadButton = $("[data-test-id=action-reload]");
-    private long firstCardSum;
-    private long secondCardSum;
-    private DataHelper.AuthInfo authInfo;
-    private DataHelper.CardInfo firstCardInfo;
-    private DataHelper.CardInfo secondCardInfo;
-    private final Pattern pattern = Pattern.compile(", баланс:\\s*(\\-?\\d+)\\s*");
 
-    public DashboardPage(DataHelper.AuthInfo authInfo) {
+    private SelenideElement heading = $("[data-test-id=dashboard]");
+    private static ElementsCollection cards = $$(".list__item div");
+    private static final String balanceStart = "баланс: ";
+    private static final String balanceFinish = " р.";
+    private static ElementsCollection ids = $$("li div");
+
+    public DashboardPage() {
         heading.shouldBe(visible);
-        this.authInfo = authInfo;
-        firstCardInfo = DataHelper.getFirstCardInfo(authInfo);
-        secondCardInfo = DataHelper.getSecondCardInfo(authInfo);
-        updateAmounts();
     }
 
-    public void updateAmounts() {
-        String firstCardDescription = $("[data-test-id='92df3f1c-a033-48e6-8390-206f6b1f56c0']").getText();
-        Matcher m = pattern.matcher(firstCardDescription);
-        m.find();
-        String str = m.group(1);
-        firstCardSum = Long.parseLong(str);
-
-        String secondCardDescription = $("[data-test-id='0f3f5c2a-249e-4c3d-8287-09f7a039391d']").getText();
-        m = pattern.matcher(secondCardDescription);
-        m.find();
-        str = m.group(1);
-        secondCardSum = Long.parseLong(str);
-
+    public static int getCardBalance(String id) {
+        val text = cards.find(attribute("data-test-id", id)).text();
+        return toExtractBalance(text);
     }
 
-    public long getFirstCardSum() {
-        return firstCardSum;
+    private static int toExtractBalance(String text) {
+        val start = text.indexOf(balanceStart);
+        val finish = text.indexOf(balanceFinish);
+        val value = text.substring(start + balanceStart.length(), finish);
+        return Integer.parseInt(value);
     }
 
-    public long getSecondCardSum() {
-        return secondCardSum;
+    public static String getIdOne() {
+        String idOne = ids.first().getAttribute("data-test-id");
+        return idOne;
     }
 
-    public String getFirstCardNumber() {
-        return firstCardInfo.getCardNumber();
+    public static String getIdTwo() {
+        String idTwo = ids.last().getAttribute("data-test-id");
+        return idTwo;
     }
 
-    public String getSecondCardNumber() {
-        return secondCardInfo.getCardNumber();
+    public DashboardPage choosingCard(String id) {
+        $("[data-test-id='" + id + "'] [data-test-id='action-deposit']").click();
+        return new DashboardPage();
     }
 
-    public void isVisible() {
-        firstBalanceButton.shouldBe(visible);
-        secondBalanceButton.shouldBe(visible);
+    public static String getAmount(String id) {
+        Faker faker = new Faker();
+        int amount = faker.number().numberBetween(0, getCardBalance(id));
+        String result = valueOf(amount);
+        return result;
     }
 
-    public ReplenishmentPage refillOneFromTwo() {
-        firstBalanceButton.click();
-        return new ReplenishmentPage(firstCardInfo.getCardNumber(), firstCardSum, secondCardSum);
+    public DashboardPage transfer(String amount, int index) {
+        $("[data-test-id='amount'] input").setValue(amount);
+        $("[data-test-id='from'] input").setValue(DataHelper.getNumberCard(index));
+        $("[data-test-id='action-transfer']").click();
+        return new DashboardPage();
     }
 
-    public ReplenishmentPage refillTwoFromOne() {
-        secondBalanceButton.click();
-        return new ReplenishmentPage(secondCardInfo.getCardNumber(), secondCardSum, firstCardSum);
+    public void chekBalance(String id, int balance) {
+        Assertions.assertEquals(getCardBalance(id), balance);
     }
 }
